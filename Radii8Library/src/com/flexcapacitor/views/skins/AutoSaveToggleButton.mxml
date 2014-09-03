@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:fc="http://ns.adobe.com/flashcatalyst/2009"
+		>
+	
+	<fx:Metadata>
+		[HostComponent("spark.components.ToggleButton")]
+	</fx:Metadata>
+	
+	<s:states>
+		<s:State name="up" />
+		<s:State name="over"  />
+		<s:State name="down"  />
+		<s:State name="disabled"  />
+		<s:State name="upAndSelected"  />
+		<s:State name="overAndSelected" />
+		<s:State name="downAndSelected"  />
+		<s:State name="disabledAndSelected"  />
+	</s:states>
+	
+	<!-- we need a hit area since bitmap image does not have a hit area? or was enabled false? -->
+	<s:Rect width="100%" height="100%">
+		<s:fill>
+			<s:SolidColor alpha="0"/>
+		</s:fill>
+	</s:Rect>
+	
+	
+	<!-- images -->
+	<s:BitmapImage x="0" y="0" smooth="true"
+				   source="{Radii8LibraryAssets.save}"/>
+	
+	<!-- images -->
+	<s:BitmapImage includeIn="disabled,down,over,up" 
+				   x="0" y="0" smooth="true" alpha="0.1"
+				   source="{Radii8LibraryAssets.disconnected}"/>
+	<s:BitmapImage includeIn="disabledAndSelected,downAndSelected,overAndSelected,upAndSelected" 
+				   x="0" y="0" smooth="true" alpha="0.5"
+				   source="{Radii8LibraryAssets.connected}"/>
+	
+	
+</s:Skin>

@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<!--
+    Inspectors
+    
+	Inspector class not found?
+	Be sure to include a reference to the classes in RadiateReferences
+    
+    
+-->
+<inspectorsPackage>
+
+    <item name="Application" className="Application" 
+    		include="true">
+    		<inspector name="Identity" className="com.flexcapacitor.views.inspectors.Identity"/>
+    </item>
+    
+    <item name="Border Container" className="spark.components.BorderContainer" 
+    		include="true">
+    		<inspector name="Identity" className="com.flexcapacitor.views.inspectors.Identity"/>
+<!--     		<inspector name="Size" className="com.flexcapacitor.views.inspectors.Size"/> -->
+    		<inspector name="Border Styles" className="com.flexcapacitor.views.inspectors.BorderStyles"/>
+    		<inspector name="Basic Background" className="com.flexcapacitor.views.inspectors.BasicBackgroundStyles"/>
+    </item>
+    
+    <item name="Label" className="spark.components.Label" 
+    		include="true">
+    		<inspector name="Identity" className="com.flexcapacitor.views.inspectors.Identity"/>
+    		<inspector name="Text" className="com.flexcapacitor.views.inspectors.TextInspector"/>
+    		<inspector name="Font Styles" className="com.flexcapacitor.views.inspectors.FontStyles"/>
+    		<inspector name="Basic Background" className="com.flexcapacitor.views.inspectors.BasicBackgroundStyles"/>
+    </item>
+    
+    <item name="Image" className="spark.components.Image" 
+    		include="true">
+    		<inspector name="Identity" className="com.flexcapacitor.views.inspectors.Identity"/>
+    		<inspector name="Image" className="com.flexcapacitor.views.inspectors.Image"/>
+    		<inspector name="Basic Background" className="com.flexcapacitor.views.inspectors.BasicBackgroundStyles"/>
+    </item>
+    
+
+</inspectorsPackage>

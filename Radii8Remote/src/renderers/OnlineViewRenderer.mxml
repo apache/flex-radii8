@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				autoDrawBackground="true"
+				width="100%"
+				implements="mx.managers.IFocusManagerContainer">
+	
+	<fx:Script>
+		<![CDATA[
+			import data.Item;
+			import data.Perspective;
+			
+			import managers.RemoteManager;
+			
+			import mx.core.IFlexDisplayObject;
+			import mx.managers.ISystemManager;
+			
+			public var item:Item;
+			public var perspective:Perspective;
+			
+			override public function set data(value:Object):void {
+				super.data = value;
+				
+				item = value as Item;
+				
+				if (!value) {
+					enabledCheckbox.selected = false;
+				}
+				else {
+					perspective = RemoteManager.selectedPerspective;
+					
+					if (perspective.types.indexOf(item.type)!=-1) {
+						enabledCheckbox.selected = true;
+					}
+					else {
+						enabledCheckbox.selected = false;
+					}
+					
+					/* enabledCheckbox.selected = item.enabled; */
+					nameLabel.text = item.name;
+					descriptionLabel.text = item.description + "\n" + item.type; 
+				}
+				
+			}
+			
+			protected function enabledCheckbox_changeHandler(event:Event):void {
+				perspective = RemoteManager.selectedPerspective;
+				RemoteManager.updatePerspectiveItem(perspective, item, enabledCheckbox.selected);
+				
+				//dispatchEvent(new Event(RemoteManager.SETTINGS_CHANGE, true));
+			}
+			
+			public function get defaultButton():IFlexDisplayObject {
+				return null;
+			}
+			
+			public function set defaultButton(value:IFlexDisplayObject):void {
+				// do nothing
+			}
+			
+			override public function get systemManager():ISystemManager {
+				return null;
+			}
+		]]>
+	</fx:Script>
+	
+	
+	
+	<s:VGroup width="100%" right="22"
+			  gap="0"
+			  paddingTop="2" paddingBottom="2">
+		<s:Label id="nameLabel" 
+				 paddingTop="2" width="100%"
+				 fontWeight="bold"
+				 typographicCase="uppercase"
+				 />
+		
+		<s:Label id="descriptionLabel" 
+				 paddingTop="2" 
+				 width="100%"
+				 />
+		
+		<s:Label id="typeLabel" 
+				 paddingTop="2" 
+				 width="100%"
+				 fontStyle="italic"
+				 alpha=".75"
+				 />
+		
+	</s:VGroup>
+	
+	
+	
+	<s:CheckBox id="enabledCheckbox" 
+				change="enabledCheckbox_changeHandler(event)"
+				verticalCenter="0"
+				right="4"/>
+	
+</s:ItemRenderer>

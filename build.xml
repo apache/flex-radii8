@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<!--
+
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+-->
+
+<project name="radii8" default="main" basedir=".">
+
+    <property name="RADII8_HOME" location="${basedir}"/>
+    
+    <!-- Required for OSX 10.6 / Snow Leopard Performance. -->
+    <!-- Java 7 on Mac requires OSX 10.7.3 or higher and is 64-bit only -->
+    <!-- local.d32 is set/used in build.properties so this needs to be done first. -->
+    <condition property="local.d32" value="-d32">
+        <and>
+            <os family="windows"/>
+            <equals arg1="${sun.arch.data.model}" arg2="64"/>
+            <equals arg1="${os.arch}" arg2="x86_64"/>
+            <equals arg1="${ant.java.version}" arg2="1.6"/>
+        </and>
+    </condition>
+
+    <property file="${RADII8_HOME}/env.properties"/>
+    <property environment="env"/>
+    <property file="${RADII8_HOME}/local.properties"/>
+    <property file="${RADII8_HOME}/build.properties"/>
+
+    <property name="debug" value="true"/>
+    <property name="strict" value="true"/>
+    <property name="javac.src" value="1.5"/>
+    
+    <property name="kit.prefix" value="apache-flex-radii8-${release.version}"/>
+    <property name="source.kit" value="${kit.prefix}-src"/>
+    <property name="binary.kit" value="${kit.prefix}-bin"/>
+    
+    <!--
+        Optional jars but should be in place for a real release build.
+        
+        For <grep> put antelopetasks*.jar in this path.
+        See version-update.
+
+        For <rat> apache-rat-0.8.jar and apache-rat-tasks-0.8.jar should be in classpath.
+        See rat-check.
+    -->
+    <path id="anttask.classpath">
+        <fileset dir="${env.ANT_HOME}/lib">
+           <include name="**/antelopetasks*.jar"/>
+           <include name="**/apache-rat*.jar"/>
+        </fileset>
+        <fileset dir="${user.home}">
+           <include name=".ant/lib/**/antelopetasks*.jar"/>
+           <include name=".ant/lib/**/apache-rat*.jar"/>
+        </fileset>
+    </path>
+    
+    <!--
+        Notes: If you're running the main target, then there is no need to call clean first.
+        Each of the main targets for the modules will call clean themselves before proceeding.
+    -->
+
+    <target name="main" depends="rat-check" description="Just run Rat for now">
+    </target>
+
+    <target name="rat-taskdef" description="Rat taskdef"> 
+        <available property="have.rattasks" 
+            resource="org/apache/rat/anttasks/antlib.xml" 
+            classpathref="anttask.classpath"/>
+
+        <antcall target="have-rattasks"/>
+        <antcall target="no-rattasks"/>
+    </target>
+   
+    <target name="have-rattasks" if="have.rattasks">
+        <typedef resource="org/apache/rat/anttasks/antlib.xml"
+                 uri="antlib:org.apache.rat.anttasks"
+                 classpathref="anttask.classpath"/>                 
+    </target>
+    
+    <target name="no-rattasks" unless="have.rattasks">
+        <echo message="Rat report not generated."/>
+        <echo message="rat jars (apache-rat-*.jar, apache-rat-tasks-*.jar)"/>
+        <echo message="not found in anttask.classpath"/>
+    </target>
+    
+	<!--
+	    Run the Apache Rat audit tool against the source in the source kit.
+	    The report is written to rat.report.
+	    
+	    To check a subset of files run with -Drat.dir=<dir>.
+	    
+	    You need to place apache-rat-tasks-0.8.jar and apache-rat-0.8.jar in the 
+	    anttask.classpath in order to do this.  If the jar isn't found, the report
+	    will not be generated.
+	--> 
+    <target name="rat-check" depends="rat-taskdef" if="have.rattasks"
+        description="Report on licenses in source kit.">
+    
+        <property name="rat.dir" value="${basedir}"/>
+        
+		<mkdir dir="${basedir}/rat" />
+		
+        <property name="rat.report" value="${basedir}/rat/rat.report"/>
+        <echo message="Checking files at ${rat.dir}, report is rat/${rat.report}"/>
+             
+        <rat:report xmlns:rat="antlib:org.apache.rat.anttasks" reportFile="${rat.report}">
+            <fileset dir="${rat.dir}">
+                <!--          Start of binary files           -->
+                <!-- exclude media (png, gif, jpg, mp3, flv) -->
+                <exclude name="**/*.png"/>
+                <exclude name="**/*.gif"/>
+                <exclude name="**/*.jpg"/>
+                <exclude name="**/*.mp3"/>
+                <exclude name="**/*.flv"/>
+                <!-- exclude psd files -->
+                <exclude name="**/*.psd"/>
+                <!--          End of binary files           -->
+                <!-- exclude the report -->
+                <exclude name="rat/**"/>
+                <!-- exclude Base64 (MIT License)  -->
+                <exclude name="Radii8Library/src/com/flexcapacitor/utils/Base64.as"/>
+                <!-- exclude EventListeners.mxml (MIT License)  -->
+                <exclude name="Radii8Library/src/com/flexcapacitor/views/panels/EventListeners.mxml"/>
+                <!-- exclude normalize.css (MIT License)  -->
+                <exclude name="Radii8Designer/src/css/normalize/2.1.2/normalize.css"/>
+                <!-- exclude swfobject.js (MIT License)  -->
+                <exclude name="**/swfobject.js"/>
+                <!-- exclude syntax highlighter (Apache License)  -->
+                <exclude name="Radii8Library/src/com/flexcapacitor/utils/SyntaxHighlighter.as"/>
+                <!-- exclude Flash Builder data files (no creativity)  -->
+                <exclude name="**/org.eclipse.core.resources.prefs"/>
+                <!-- exclude some other files (no creativity)  -->
+                <exclude name="Radii8Designer/src/blankpage.html"/>				
+                <exclude name="Radii8Designer/build.number"/>
+                <exclude name="Radii8Designer/todo.txt"/>				
+            </fileset>
+        </rat:report>
+    </target>
+
+</project>

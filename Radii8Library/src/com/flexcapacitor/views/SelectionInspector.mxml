@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<s:Group xmlns:controls="com.flexcapacitor.graphics.*"
+		 xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:filters="com.flexcapacitor.filters.*"
+		 
+		 creationComplete="group1_creationCompleteHandler(event)">
+
+	<fx:Script>
+		<![CDATA[
+			import com.flexcapacitor.controller.Radiate;
+			import com.flexcapacitor.tools.ITool;
+			import com.flexcapacitor.tools.Selection;
+			import com.flexcapacitor.utils.supportClasses.ComponentDescription;
+			
+			import mx.events.FlexEvent;
+			
+			public var radiate:Radiate;
+			public var tool:ITool;
+
+			[Bindable]
+			public var selectionTool:Selection;
+			
+			[Bindable]
+			public var showDropLocation:Boolean;
+			
+			protected function group1_creationCompleteHandler(event:FlexEvent):void {
+				radiate = Radiate.getInstance();
+				
+				
+				tool = radiate.selectedTool;
+				
+				updateTool(tool);
+			}
+			
+			/**
+			 * Update UI components to tool value
+			 * */
+			public function updateTool(tool:ITool):void {
+				var toolDescription:ComponentDescription = radiate.getToolDescription(tool);
+				
+				if (toolDescription && toolDescription.instance 
+					&& toolDescription.instance is Selection) {
+					selectionTool = Selection(toolDescription.instance);
+					showSelection.selected = selectionTool.showSelection;
+					showLabel.selected = selectionTool.showSelectionLabel;
+					
+				}
+			}
+			
+			/**
+			 * Show selection checkbox change handler
+			 * */
+			protected function showSelection_changeHandler(event:Event):void {
+				var toolDescription:ComponentDescription = radiate.getToolDescription(tool);
+				var selectedTool:ITool = tool;
+				
+				
+				if (toolDescription.instance) {
+					var selectionTool:Selection = Selection(toolDescription.instance);
+					selectionTool.showSelection = showSelection.selected;
+				}
+				
+			}
+			
+			/**
+			 * Show label change handler
+			 * */
+			protected function showLabel_changeHandler(event:Event):void {
+				var toolDescription:ComponentDescription = radiate.getToolDescription(tool);
+				var selectedTool:ITool = tool;
+				
+				if (toolDescription.instance) {
+					var selectionTool:Selection = Selection(toolDescription.instance);
+					selectionTool.showSelectionLabel = showLabel.selected;
+				}
+				
+				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:layout>
+		<s:HorizontalLayout paddingLeft="4" verticalAlign="baseline"/>
+	</s:layout>
+	
+	
+	<s:CheckBox id="showSelection" label="Show Selection" change="showSelection_changeHandler(event)"/>
+	<s:CheckBox id="showLabel" label="Show Label" change="showLabel_changeHandler(event)"/>
+	<s:Label text="Drop Location: " paddingLeft="4" visible="{showDropLocation}" includeInLayout="{showDropLocation}"/>
+	<s:Label id="dropLocation" text="{selectionTool.dragLocation}" visible="{showDropLocation}" includeInLayout="{showDropLocation}"/>
+
+</s:Group>

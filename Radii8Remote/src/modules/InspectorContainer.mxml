@@ -1,0 +1,724 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  width="400" height="100%"
+		  minHeight="250"
+		  styleName="shadow"
+		  creationComplete="init(event)"
+		  stateChangeComplete="module1_stateChangeCompleteHandler(event)"
+		  >
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.shadow {
+			textShadowColor:red;
+		}
+	</fx:Style>
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.flash_proxy;
+			
+			import mx.collections.ArrayList;
+			import mx.events.FlexEvent;
+			import mx.events.MenuEvent;
+			
+			import data.Perspective;
+			
+			import managers.RemoteManager;
+			
+			import renderers.OnlineViewRenderer;OnlineViewRenderer;
+			import renderers.PerspectivesViewRenderer;PerspectivesViewRenderer;
+			import renderers.ViewRenderer;
+			
+			import spark.events.IndexChangeEvent;
+			
+			/////////////////////////////////////////////////////////
+			/// CONSTANTS
+			/////////////////////////////////////////////////////////
+			public const HOME_STATE:String 			= "home";
+			public const ONLINE_STATE:String 		= "online";
+			public const VIEWS_STATE:String 		= "views";
+			public const SETTINGS_STATE:String 		= "settings";
+			public const PERSPECTIVES_STATE:String 	= "perspectives";
+			public const LOADING_STATE:String 		= "loading";
+			
+			public const SHARED_OBJECT_NAME:String 	= "save";
+			public const ITEMS_UPDATED:String 		= "itemsUpdated";
+			public const ITEMS_UPDATE_FAULT:String 	= "itemsUpdateFault";
+			public const SETTINGS_CHANGE:String 	= "settingChange";
+			
+			/////////////////////////////////////////////////////////
+			/// Variables
+			/////////////////////////////////////////////////////////
+			
+			/**
+			 * 
+			 * */
+			[Bindable]
+			public var itemRenderer:ClassFactory = new ClassFactory(ViewRenderer);
+			
+			
+			/////////////////////////////////////////////////////////
+			/// Methods
+			/////////////////////////////////////////////////////////
+
+			/**
+			 * 
+			 * */
+			public var clearSharedObject:Boolean = true;
+			
+			/**
+			 * 
+			 * */
+			public var remoteManager:RemoteManager = RemoteManager.getInstance();
+			
+			
+			/**
+			 * Register classes for saving settings
+			 * */
+			protected function init(event:FlexEvent):void {
+				RemoteManager.init(clearSharedObject);
+				
+				// listen to changes to settings and save
+				remoteManager.addEventListener(SETTINGS_CHANGE, settingChangeHandler);
+			}
+			
+			/**
+			 * Saves changes to settings when dispatched from modules
+			 * */
+			public static function settingChangeHandler(event:Event):void {
+				RemoteManager.saveSettings();
+			}
+			
+			
+			/**
+			 * Handle when view menu item is selected
+			 * */
+			private function menuHandler(event:MenuEvent):void {
+				var name:String = String(event.item.@label);
+				var stateName:String = String(event.item.@stateName);
+				var menuItem:Object = event.item;
+				
+				if (menuItem.@groupName=="perspectives") {
+					var perspective:Perspective = remoteManager.findPerspectiveByName(menuItem.@label);
+					RemoteManager.selectedPerspective = perspective;
+					RemoteManager.remoteItemsList.refresh();
+					changeStates(VIEWS_STATE);
+					
+				}
+				// Don’t open the Alert for a menu bar item that
+				// opens a popup submenu.
+				else if (menuItem.@data != "top") {
+					
+					//Alert.show("Label: " + event.item.@label + "\n" + "Data: " + event.item.@data, "Clicked menu item");
+					var item:Object = focusManager.getFocus();
+					if (item is MenuBar) {
+						trace("is checkbox");
+					}
+					
+					//event.preventDefault();
+					
+					//FlexGlobals.topLevelApplication.setFocus();//setFocus();
+					//onlineList.setStyle("verticalScrollPolicy", "off");
+					//setTimeout(changeStates, 1000, stateName);
+					changeStates(stateName);
+				}
+			}
+			
+			/**
+			 * Update title when state changes
+			 * */
+			protected function module1_stateChangeCompleteHandler(event:FlexEvent):void {
+				updateTitleLabel();
+			}
+			
+			/**
+			 * Update title of general view
+			 * */
+			private function updateTitleLabel():void {
+				
+				if (currentState==HOME_STATE) {
+					titleLabel.text = "Home";
+				}
+				else if (currentState==SETTINGS_STATE) {
+					titleLabel.text = "Settings";
+				}
+				else if (currentState==ONLINE_STATE) {
+					titleLabel.text = "Available Views";
+				}
+				else if (currentState==VIEWS_STATE) {
+					titleLabel.text = "Views";
+				}
+				else if (currentState==PERSPECTIVES_STATE) {
+					titleLabel.text = "Perspectives";
+				}
+				else if (currentState==LOADING_STATE) {
+					titleLabel.text = "Loading";
+				}
+			}
+			
+			/**
+			 * Changes state
+			 * */
+			private function changeStates(name:String):void {
+				
+				if (name==HOME_STATE) {
+					currentState = HOME_STATE;
+				}
+				else if (name==SETTINGS_STATE) {
+					currentState = SETTINGS_STATE;
+				}
+				else if (name==ONLINE_STATE) {
+					if (!RemoteManager.remoteItemsList.length) {
+						remoteManager.getRemoteItems();
+					}
+					currentState = ONLINE_STATE;
+				}
+				else if (name==VIEWS_STATE) {
+					currentState = VIEWS_STATE;
+				}
+				else if (name==PERSPECTIVES_STATE) {
+					currentState = PERSPECTIVES_STATE;
+				}
+				else if (name==LOADING_STATE) {
+					currentState = LOADING_STATE;
+				}
+				
+			}
+			
+			/**
+			 * Sets the label of the mini right arrow menu item. Hides the root menu item from showing a value
+			 * */
+			private function menuLabelFunction(item:Object):String {
+				
+				if (item.@menuRoot==true) {
+					//return "  ";
+				}
+				
+				return String(item.@label);
+			}
+			
+			/**
+			 * Goes to online state
+			 * */
+			protected function showOnlineViewHandler(event:MouseEvent):void {
+				changeStates(ONLINE_STATE);
+			}
+			
+			/**
+			 * Goes to views state
+			 * */
+			protected function showViewsHandler(event:MouseEvent):void {
+				changeStates(VIEWS_STATE);
+			}
+			
+			
+			/**
+			 * Add perspective
+			 * */
+			protected function addPerspectives_clickHandler(event:Event):void {
+				var name:String = newPerspectiveNameInput.text;
+				var perspective:Perspective = remoteManager.createPerspective(newPerspectiveNameInput.text);
+				RemoteManager.saveSettings();
+				perspectivesCollection.refresh();
+				var list:XMLList = menuItemsXMLList.(@label=="Perspectives").item;
+				var item = '<item label="'+perspective.name+'" groupName="perspectives" type="radio" toggled="true"/>';
+				//list.prependChild();
+				var newXML:XML = new XML("<menu>"+item + list.toXMLString()+"</menu>");
+				var nList:XMLList = menuItemsXMLList.(@label=="Perspectives").item;
+				//var nList = menuItemsXMLList.(@label=="Perspectives").item;
+				for ( var i:int = list.length() - 1; i >= 0; i-- ) {
+            		delete list[i];
+        		}
+
+				var nList2:XML = menuItemsXMLList.(@label=="Perspectives")[0];
+				nList2.menu = newXML.item;
+				//nList.children = undefined;
+				//delete nList[0][0];
+				newPerspectiveNameInput.text = "";
+				menuCollection.refresh();
+			}
+			
+			
+			/**
+			 * Updates the default perspective items 
+			 * */
+			public function updateDefaultItems():void {
+				// 
+			}
+			
+			/**
+			 * Load list of remote items
+			 * */
+			protected function loadRemoteViews(event:MouseEvent):void {
+				changeStates(LOADING_STATE);
+				
+				remoteManager.getRemoteItems();
+			}
+			
+			/**
+			 * Filters out items not in the selected perspective
+			 * */
+			public function filterItemsFunction(item:Object):Boolean {
+				var types:Array = RemoteManager.selectedPerspective.types;
+				var count:int = types ? types.length : 0;
+				
+				for (var i:int;i<count;i++) {
+					if (types[i]==item.type) {
+						return true;
+					}
+				}
+				
+				return false;
+			}
+			
+			protected function continueOnlineViewsSelection_clickHandler(event:MouseEvent):void {
+				selectedItems.refresh();
+				RemoteManager.saveSettings();
+				changeStates(VIEWS_STATE);
+			}
+			
+			protected function selectedItemsRefresh_clickHandler(event:MouseEvent):void {
+				
+				selectedItems.refresh();
+			}
+			
+			protected function perspectivesDropDownList_changeHandler(event:IndexChangeEvent):void {
+				
+				if (event.newIndex>-1) {
+					var p:Object = perspectivesCollection.getItemAt(event.newIndex);
+					RemoteManager.selectedPerspective = perspectivesCollection.getItemAt(event.newIndex) as Perspective;
+					RemoteManager.remoteItemsList.refresh();
+				}
+			}
+			
+			protected function perspectivesList_changeHandler(event:IndexChangeEvent):void {
+				
+				if (event.newIndex>-1) {
+					var p:Object = perspectivesCollection.getItemAt(event.newIndex);
+					RemoteManager.selectedPerspective = perspectivesCollection.getItemAt(event.newIndex) as Perspective;
+					RemoteManager.remoteItemsList.refresh();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<fx:Model id="menuBarModel">
+			<root>
+			<menu label="File...">
+				<item label="New" />
+				<item label="Open" />
+				<item label="Save" />
+				<item label="Save As" />
+				<fake type="separator" />
+				<item label="Exit" />
+			</menu>
+			<menu label="Edit...">
+				<item label="Cut" />
+				<item label="Copy" />
+				<item label="Paste" />
+				<fake type="separator" />
+				<item label="Undo" />
+				<item label="Redo" />
+				<fake type="separator" />
+				<item label="radio button" type="radio" toggled="true" />
+				<item label="check box" type="check" toggled="true" />
+			</menu>
+			<menu label="Help" />
+			</root>
+		</fx:Model>
+		
+		<fx:XMLList id="viewsXMLList" xmlns="">
+			<item label="Home" stateName="home" type="radio" groupName="view" toggled="true" />
+			<item label="Views" stateName="views" type="radio" groupName="view" toggled="false" />
+			<item label="Perspectives" stateName="perspectives" type="radio" groupName="view" toggled="false" />
+			<item label="Settings" stateName="settings" type="radio" groupName="view" toggled="false" />
+			<item label="Online" stateName="online" type="radio" groupName="view" toggled="false" />
+		</fx:XMLList>
+		
+
+		<fx:XMLList id="perspectivesXMLList" xmlns="">
+			<item label="Default" toggled="false" groupName="perspectives" />
+			<fake type="separator" />
+			<item label="Settings" stateName="settings" type="radio" groupName="perspectives" />
+		</fx:XMLList>
+		
+		<fx:XMLList id="menuItemsXMLList" xmlns="">
+			<menu label="Perspectives">
+				<item label="Default" groupName="perspectives" type="radio" toggled="true" />
+				<item type="separator" />
+				<item label="Settings" stateName="settings" groupName="perspectives" />
+			</menu>
+			<menu label="Screens" menuRoot="true">
+				<item label="Home" stateName="home" type="radio" groupName="view" toggled="true" />
+				<item label="Views" stateName="views" type="radio" groupName="view" toggled="false" />
+				<item label="Perspectives" stateName="perspectives" type="radio" groupName="view" toggled="false" />
+				<item label="Online" stateName="online" type="radio" groupName="view" toggled="false" />
+				<item label="Settings" stateName="settings" type="radio" groupName="view" toggled="false" />
+			</menu>
+		</fx:XMLList>
+		
+		<s:ArrayCollection id="perspectivesCollection" source="{RemoteManager.perspectives}"/>
+		<s:ArrayCollection id="selectedPerspectiveItemsCollection" source="{RemoteManager.preferences.selectedPerspective.items}"/>
+		
+		<s:ArrayCollection id="selectedItems" 
+						   source="{RemoteManager.remoteItemsList.source}" 
+						   filterFunction="filterItemsFunction"/>
+		
+	</fx:Declarations>
+	
+	<s:transitions>
+		<s:Transition fromState="home" interruptionBehavior="stop" toState="settings">
+			<s:Parallel target="{menuBar2}">
+				<s:Animate duration="500">
+					<s:SimpleMotionPath property="x" valueBy="-250"/>
+					<s:SimpleMotionPath property="y" valueBy="0"/>
+				</s:Animate>
+				<s:Fade duration="250" startDelay="250"/>
+			</s:Parallel>
+		</s:Transition>
+	</s:transitions>
+	
+	
+	<s:states>
+		<s:State name="home"/>
+		<s:State name="loading"/>
+		<s:State name="settings"/>
+		<s:State name="online"/>
+		<s:State name="views"/>
+		<s:State name="perspectives"/>
+	</s:states>
+	
+	
+	<s:VGroup width="100%" height="100%"
+			  top="30"
+			  clipAndEnableScrolling="true">
+		
+		<!-- HOME -->
+		<s:Group width="100%" height="100%" includeIn="home">
+			<s:VGroup width="100%" verticalCenter="0" horizontalAlign="center">
+				<s:Label text="Welcome&#xd;Push the start button to get views from the server"
+						 textAlign="center"/>
+				<s:Spacer height="10"/>
+				<s:Button label="Start" click="loadRemoteViews(event)"/>
+			</s:VGroup>
+		</s:Group>
+		
+		
+		<!-- LOADING -->
+		<s:Group width="100%" height="100%" includeIn="loading">
+			<s:VGroup horizontalCenter="0" verticalCenter="00">
+				<s:Label text="Loading remote items"/>
+				<s:Label id="loadingStatusText" 
+							text="{RemoteManager.loadingStatusText}" 
+							/>
+				<mx:ProgressBar visible="{RemoteManager.retrievingData}" 
+								hideEffect="Fade" 
+								label=""
+								height="10"
+								indeterminate="true"/>
+				<s:HGroup width="100%">
+					<s:Button label="Reload" 
+							  click="loadRemoteViews(event)"/>
+					<s:Button label="Continue" 
+							  enabled="{RemoteManager.itemsReceived}" 
+							  click="showOnlineViewHandler(event)"/>
+				</s:HGroup>
+			</s:VGroup>
+		</s:Group>
+		
+		
+		
+		<!-- ALL VIEWS AVAILABLE ONLINE -->
+		<s:VGroup width="100%" 
+				  height="100%"
+				  paddingBottom="2" paddingLeft="2" 
+				  paddingRight="2" paddingTop="2"
+				  includeIn="online" >
+			
+			<s:Spacer height="10"/>
+			
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:Label text="Select the views to show in the perspective selected and click continue"/>
+				<s:Spacer width="100%" height="10"/>
+			</s:HGroup>
+			
+			<s:HGroup gap="1" width="100%">
+				<!--<s:Label text="Enabled"/>
+				<s:Label text="Panel"/>-->
+				<s:Line width="100%">
+					<s:stroke>
+						<s:SolidColorStroke weight="2" />
+					</s:stroke>
+				</s:Line>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:DropDownList id="perspectivesDropDownList" 
+								width="100%"
+								dataProvider="{perspectivesCollection}"
+								labelField="name"
+								selectedItem="{RemoteManager.selectedPerspective}"
+								change="perspectivesDropDownList_changeHandler(event)"/>
+				<s:Spacer width="100%" height="10"/>
+				<s:Label text="Enabled"/>
+			</s:HGroup>
+			
+			<s:HGroup gap="1" width="100%">
+				<!--<s:Label text="Enabled"/>
+				<s:Label text="Panel"/>-->
+				<s:Line width="100%">
+					<s:stroke>
+						<s:SolidColorStroke weight="2" />
+					</s:stroke>
+				</s:Line>
+			</s:HGroup>
+			
+			<s:List id="onlineList" 
+					dataProvider="{RemoteManager.remoteItemsList}"
+					itemRenderer="{new ClassFactory(OnlineViewRenderer)}"
+					width="100%"
+					borderVisible="false"
+					height="100%"
+					horizontalScrollPolicy="off"
+					>
+				
+			</s:List>
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:TextInput id="searchInput" 
+							 prompt="Search"
+							 borderAlpha=".5"/>
+				<s:Spacer width="100%" height="10"/>
+				<s:Button label="Continue" click="continueOnlineViewsSelection_clickHandler(event)"/>
+			</s:HGroup>
+		</s:VGroup>
+		
+		
+		<!-- VIEWS -->
+		<s:VGroup width="100%" 
+				  height="100%"
+				  paddingBottom="2" paddingLeft="2" 
+				  paddingRight="2" paddingTop="2"
+				  includeIn="views">
+			
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:Label text="Views in the current perspective" width="100%"/>
+				<s:Spacer width="100%" height="10"/>
+				<s:TextInput id="searchViewsInput" focusAlpha="0" prompt="filter"/>
+			</s:HGroup>
+			
+			<s:HGroup gap="1" width="100%">
+				<s:Line width="100%">
+					<s:stroke>
+						<s:SolidColorStroke weight="1" />
+					</s:stroke>
+				</s:Line>
+			</s:HGroup>
+			
+			
+			<s:HGroup gap="1" width="100%">
+				<s:ModuleLoader url="modules/Tools.swf" width="100%"/>
+ 			</s:HGroup>
+			
+			<s:HGroup gap="1" width="100%">
+				<s:Line width="100%">
+					<s:stroke>
+						<s:SolidColorStroke weight="1" />
+					</s:stroke>
+				</s:Line>
+			</s:HGroup>
+			
+			<!-- EXAMPLE RADIATE CONTAINER -->
+			<s:Scroller id="radiateScroller" 
+						width="100%"  
+						height="100%"
+						left="0"
+						right="0"
+						top="0" 
+						bottom="0">
+				
+				<s:DataGroup id="panels" width="100%" height="100%"
+							 clipAndEnableScrolling="true"
+							 itemRenderer="renderers.ModuleItemRenderer"
+							 dataProvider="{selectedItems}"
+							 >
+					
+					<s:layout>
+						<s:VerticalLayout horizontalAlign="justify"
+										  useVirtualLayout="false"
+										  variableRowHeight="true"
+										  paddingRight="10" paddingLeft="10"/>
+					</s:layout>
+					
+				</s:DataGroup>
+				
+			</s:Scroller>
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:Spacer width="100%" height="10"/>
+				<s:Button label="Refresh" click="selectedItemsRefresh_clickHandler(event)"/>
+			</s:HGroup>
+				
+		</s:VGroup>
+		
+		
+		<!-- SETTINGS -->
+		<s:VGroup width="100%" 
+				  paddingBottom="2" paddingLeft="2" 
+				  paddingRight="2" paddingTop="2"
+				  includeIn="settings">
+			
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:Label text="Panel width:" />
+				<s:TextInput id="panelWidth" widthInChars="3"/>
+				<s:Spacer width="100%" height="10"/>
+			</s:HGroup>
+			
+			<s:Label id="settingsLabel" 
+					 text="Show views for {RemoteManager.preferences.selectedPerspective.name}" 
+					 width="100%" backgroundColor="#cccccc"/>
+			
+			
+			<s:List dataProvider="{selectedItems}"
+					itemRenderer="{itemRenderer}"
+					width="100%"
+					dropEnabled="true"
+					dragEnabled="true"
+					dragMoveEnabled="true"
+					borderVisible="false"
+					>
+				<s:layout>
+					<s:VerticalLayout horizontalAlign="contentJustify" verticalAlign="middle"
+									  />
+				</s:layout>
+				
+			</s:List>
+			
+			<s:Label text="Tools" width="100%" backgroundColor="#cccccc"/>
+			
+			<!--<s:Button id="showHomeButton"
+			label="Home"
+			click="showHomeButton_clickHandler(event)"/>-->
+			
+			<!--<s:HGroup gap="1">
+			<s:Label text="..." toolTip="Enabled"/>
+			<s:Label text="Panel"/>
+			</s:HGroup>-->
+			
+			<s:List dataProvider="{selectedPerspectiveItemsCollection}"
+					itemRenderer="{itemRenderer}"
+					width="100%"
+					dropEnabled="true"
+					dragEnabled="true"
+					dragMoveEnabled="true"
+					borderVisible="false"
+					>
+				<s:layout>
+					<s:VerticalLayout horizontalAlign="contentJustify" verticalAlign="middle"
+									  />
+				</s:layout>
+				
+			</s:List>
+		</s:VGroup>
+		
+		
+		<!-- PERSPECTIVES -->
+		<s:VGroup width="100%" 
+				  paddingBottom="2" paddingLeft="2" 
+				  paddingRight="2" paddingTop="2"
+				  includeIn="perspectives">
+			
+			
+			<s:Label text="Select the perspective" width="100%"/>
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:TextInput id="searchPerspectivesInput" prompt="Search" />
+				<s:Spacer width="100%" height="10"/>
+				<!--<s:Button label="Home" 
+						  click="showHomeButton_clickHandler(event)"/>-->
+				<!--<s:Label text="ONLINE"/>-->
+			</s:HGroup>
+			
+			<s:HGroup gap="1" width="100%">
+				<!--<s:Label text="Enabled"/>
+				<s:Label text="Panel"/>-->
+				<s:Line width="100%">
+					<s:stroke>
+						<s:SolidColorStroke weight="1" />
+					</s:stroke>
+				</s:Line>
+			</s:HGroup>
+			
+			<s:List id="perspectivesList" 
+					dataProvider="{perspectivesCollection}"
+					itemRenderer="{new ClassFactory(PerspectivesViewRenderer)}"
+					change="perspectivesList_changeHandler(event)"
+					width="100%"
+					borderVisible="false"
+					>
+				
+			</s:List>
+			
+			<s:HGroup width="100%" gap="1" verticalAlign="middle">
+				<s:TextInput id="newPerspectiveNameInput" width="100%" />
+				<s:Button label="Add" 
+						  click="addPerspectives_clickHandler(event)"/>
+			</s:HGroup>
+		</s:VGroup>
+		
+	</s:VGroup>	
+	
+	<!-- CURRENT STATE LABEL-->
+	<s:Label id="titleLabel" right="26" top="4" visible="false"/>
+	
+	<!-- MORE ICON -->
+	<s:Image source="@Embed('assets/icons/more.png')" 
+			 top="2" right="2"
+			 width="22" height="20"
+			 visible="false"/>
+	
+	<mx:MenuBar id="menuBar2"
+				focusEnabled="false"
+				hasFocusableChildren="false"
+				labelField="@label"
+				itemClick="menuHandler(event)"
+				labelFunction="menuLabelFunction"
+				backgroundSkin="{null}"
+				cornerRadius="0"
+				top="0" left="-20"
+				height="28"
+				useHandCursor="true"
+				buttonMode="true"
+				>
+		<mx:dataProvider>
+			<s:XMLListCollection id="menuCollection">{menuItemsXMLList}</s:XMLListCollection>
+		</mx:dataProvider>
+	</mx:MenuBar>
+</s:Group>

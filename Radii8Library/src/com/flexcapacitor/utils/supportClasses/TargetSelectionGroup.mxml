@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				
+				autoDrawBackground="false"
+				mouseChildren="false"
+				mouseEnabled="false"
+				buttonMode="false"
+				mouseEnabledWhereTransparent="false"
+				width="20" height="20"
+				implements="com.flexcapacitor.utils.supportClasses.ISelectionGroup"
+				>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import com.flexcapacitor.controller.Radiate;
+			import com.flexcapacitor.model.IDocument;
+			
+			import mx.core.mx_internal;
+			import mx.events.DragEvent;
+			import mx.utils.NameUtil;
+			
+			use namespace mx_internal;
+			
+			
+			
+			override public function set data(value:Object):void {
+				super.data = value;
+				
+				
+				// check if target is component and is not skin
+				// should not be a skin
+				labelDisplay.text = NameUtil.getUnqualifiedClassName(data);
+				
+			}
+			
+			protected function itemrenderer1_mouseMoveHandler(event:MouseEvent):void
+			{
+				trace("selection group is getting mouse events");
+				dispatchEvent(event.clone());
+			}
+			
+			protected function itemrenderer1_dragOverHandler(event:DragEvent):void
+			{
+				trace("selection group is getting drag events");
+				dispatchEvent(event.clone());
+			}
+			
+			private var _showSelectionFill:Boolean = true;
+
+			public function get showSelectionFill():Boolean {
+				return _showSelectionFill;
+			}
+
+			public function set showSelectionFill(value:Boolean):void {
+				_showSelectionFill = value;
+				invalidateDisplayList();
+			}
+
+			
+			private var _showSelectionFillOnDocument:Boolean = true;
+
+			public function get showSelectionFillOnDocument():Boolean {
+				return _showSelectionFillOnDocument;
+			}
+
+			public function set showSelectionFillOnDocument(value:Boolean):void {
+				_showSelectionFillOnDocument = value;
+				invalidateDisplayList();
+			}
+
+			
+			private var _showSelectionLabel:Boolean = true;
+
+			public function get showSelectionLabel():Boolean {
+				return _showSelectionLabel;
+			}
+
+			public function set showSelectionLabel(value:Boolean):void {
+				_showSelectionLabel = value;
+				invalidateDisplayList();
+			}
+
+			
+			private var _showSelectionLabelOnDocument:Boolean = true;
+
+			public function get showSelectionLabelOnDocument():Boolean {
+				return _showSelectionLabelOnDocument;
+			}
+
+			public function set showSelectionLabelOnDocument(value:Boolean):void {
+				_showSelectionLabelOnDocument = value;
+				invalidateDisplayList();
+			}
+
+		
+			private var _selectionBorderColor:uint = 0x2da6e9;
+	
+			public function get selectionBorderColor():uint {
+				return _selectionBorderColor;
+			}
+	
+			public function set selectionBorderColor(value:uint):void {
+				if (_selectionBorderColor==value) return;
+				
+				_selectionBorderColor = value;
+				
+				invalidateDisplayList();
+			}
+			
+			
+			
+			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				var radiate:Radiate = Radiate.getInstance();
+				var documentDescription:IDocument = radiate.selectedDocument;
+				//graphics.clear();
+				/*
+				was showing previous selection like the graphics weren't cleared
+				selectionFill.width = unscaledWidth;
+				selectionFill.height = unscaledHeight;
+				selectionStroke.width = unscaledWidth;
+				selectionStroke.height = unscaledHeight;*/
+				var solidColorStroke:SolidColorStroke = SolidColorStroke(selectionStroke.stroke);
+				if (selectionStroke && 
+					solidColorStroke.color != selectionBorderColor) {
+					solidColorStroke.color = selectionBorderColor;
+					labelDisplay.setStyle("backgroundColor", selectionBorderColor);
+				}
+				
+				// hide or show background fill
+				if (showSelectionFill) {
+					
+					if (documentDescription && documentDescription.instance == data && !showSelectionFillOnDocument) {
+						selectionFill.visible = false;
+					}
+					else {
+						selectionFill.visible = true;
+					}
+				}
+				else {
+					selectionFill.visible = false;
+				}
+				
+				// hide or show label
+				if (showSelectionLabel) {
+				
+					if (documentDescription && documentDescription.instance == data && !showSelectionLabelOnDocument) {
+						labelDisplay.visible = false;
+					}
+					else {
+						labelDisplay.visible = true;
+					}
+				}
+				else {
+					labelDisplay.visible = false;
+				}
+				
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	<s:Rect id="selectionFill"  width="{width}" height="{height}">
+		<s:fill>
+			<s:SolidColor color="0x2da6e9" alpha=".08" />
+		</s:fill>
+	</s:Rect>
+	
+	<s:Rect id="selectionStroke" width="{width}" height="{height}">
+		<s:stroke>
+			<s:SolidColorStroke color="0x2da6e9" weight="0" alpha="1"/>
+		</s:stroke>
+	</s:Rect>
+	
+	<s:Label id="labelDisplay" 
+			 top="-14"
+			 fontSize="9"
+			 typographicCase="uppercase"
+			 text="Group"
+			 textAlign="center"
+			 verticalAlign="middle"
+			 height="14" 
+			 paddingLeft="5" 
+			 paddingRight="5"
+			 fontWeight="bold"
+			 color="0xffffff" 
+			 backgroundColor="0x2da6e9"
+			 backgroundAlpha=".9" 
+			 mouseChildren="false"
+			 mouseEnabled="false"
+			 />
+	<!--<s:Button bottom="-5" label="clicable?" click="trace('clicked')"/>-->
+</s:ItemRenderer>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:c="com.flexcapacitor.controls.*"
+		 xmlns:handlers="com.flexcapacitor.handlers.*" 
+		 xmlns:collections="com.flexcapacitor.effects.collections.*"
+		 xmlns:components="com.flexcapacitor.components.*" 
+		 xmlns:flexiframe="com.google.code.flexiframe.*" 
+		 
+		 minWidth="200" 
+		 minHeight="100"
+		 implements="com.flexcapacitor.views.IInspector"
+		 >
+	
+	<fx:Script>
+		<![CDATA[
+			import com.flexcapacitor.controller.Radiate;
+			import com.flexcapacitor.events.RadiateEvent;
+			import com.flexcapacitor.model.MetaData;
+			import com.flexcapacitor.utils.DisplayObjectUtils;
+			
+			import flash.net.navigateToURL;
+			
+			
+			/**
+			 * Reference to Radiate
+			 * */
+			public var radiate:Radiate;
+			
+			public var lastURL:String;
+			public var declaredBy:String;
+			
+			public function activate():void {
+				radiate = Radiate.getInstance();
+				
+				radiate.addEventListener(RadiateEvent.PROPERTY_SELECTED, propertySelectedHandler, false, 0, true);
+			}
+			
+			public function deactivate():void {
+				if (radiate) {
+					radiate.removeEventListener(RadiateEvent.PROPERTY_SELECTED, propertySelectedHandler);
+				}
+			}
+			 
+			protected function propertySelectedHandler(event:RadiateEvent):void {
+				var metadata:MetaData = MetaData(event.selectedItem);
+				var isVisible:Boolean = DisplayObjectUtils.getGreatestVisibilityDisplayList(this);
+				var path:String = "";
+				var prefix:String = "";
+				
+				lastURL  = Radiate.getURLToHelp(metadata);
+				declaredBy = metadata.declaredBy;
+				
+				if (!isVisible || !showDocsCheckbox.selected) {
+					
+					textURL.text = "";
+					return;
+				}
+				
+				updateDocumentation();
+				
+			}
+			
+			protected function showDocsCheckbox_changeHandler(event:Event):void {
+				
+				updateDocumentation();
+			}
+			
+			protected function openInSeparateWindow_changeHandler(event:Event):void {
+				
+				updateDocumentation();
+			}
+			
+			public function updateDocumentation():void {
+				
+				if (showDocsCheckbox.selected) {
+					
+					if (openInSeparateWindow.selected) {
+						var request:URLRequest = new URLRequest(lastURL);
+						navigateToURL(request, "asdocs");
+						
+						if (docsFrame.source!="" || docsFrame.source!="about:blank") {
+							docsFrame.source = "";
+						}
+					}
+					else {
+						docsFrame.source = lastURL;
+					}
+					
+					if (showURL.selected) {
+						textURL.text = lastURL;
+					}
+					else {
+						textURL.text = declaredBy;
+					}
+				}
+				else {
+					docsFrame.source = "about:blank";
+					textURL.text = "";
+				}
+			}
+			
+			protected function showURL_changeHandler(event:Event):void {
+				if (showURL.selected) {
+					textURL.text = lastURL;
+				}
+				else {
+					textURL.text = declaredBy;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:HGroup left="0" right="0" 
+			  width="100%"
+			  clipAndEnableScrolling="true" 
+			  paddingLeft="6" 
+			  paddingRight="10"
+			  >
+		<s:TextInput id="textURL" 
+					 width="100%" 
+					 color="#A6a5a5" 
+					 borderColor="#A5A5A5"
+					 borderVisible="false"
+					 focusAlpha="0"
+					 prompt="No documentation available. Select a property, style or event."/>
+		<s:CheckBox id="showURL" label="Show URL" 
+					change="showURL_changeHandler(event)"/>
+		<s:CheckBox id="openInSeparateWindow" label="Open in Window" 
+					change="openInSeparateWindow_changeHandler(event)"/>
+		<s:CheckBox id="showDocsCheckbox" 
+					label="Enabled" 
+					change="showDocsCheckbox_changeHandler(event)"
+					selected="true"
+					/>
+	</s:HGroup>
+	
+	<flexiframe:IFrame id="docsFrame" top="28" width="100%" height="100%" />
+	
+</s:Group>

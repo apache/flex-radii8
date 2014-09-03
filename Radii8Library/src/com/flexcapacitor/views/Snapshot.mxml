@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:handlers="com.flexcapacitor.handlers.*" 
+		 xmlns:display="com.flexcapacitor.effects.display.*" 
+		 xmlns:bitmap="com.flexcapacitor.effects.bitmap.*" 
+		 xmlns:file="com.flexcapacitor.effects.file.*" 
+		 xmlns:core="com.flexcapacitor.effects.core.*"
+		 xmlns:status="com.flexcapacitor.effects.status.*"
+		 xmlns:popup="com.flexcapacitor.effects.popup.*" 
+		 xmlns:controls="com.flexcapacitor.controls.*"
+		 
+		 creationComplete="group1_creationCompleteHandler(event)"
+		 width="400" 
+		 height="300" 
+		 >
+	
+	<fx:Script>
+		<![CDATA[
+			import com.flexcapacitor.controller.Radiate;
+			import com.flexcapacitor.events.RadiateEvent;
+			import com.flexcapacitor.utils.ClassUtils;
+			
+			import mx.events.FlexEvent;
+			public var radiate:Radiate = Radiate.instance;
+			
+			private var _target:DisplayObject;
+
+			[Bindable]
+			public function get target():DisplayObject {
+				return _target;
+			}
+
+			public function set target(value:DisplayObject):void {
+				_target = value as DisplayObject;
+				
+				if (rasterize.bitmapData) {
+					rasterize.bitmapData.dispose();
+					rasterize.bitmapData = null;
+				}
+				
+				if (target) {
+					fileName = ClassUtils.getClassNameOrID(target);
+				}
+				else {
+					fileName = "Screenshot";
+				}
+				
+			}
+
+			
+			protected function group1_creationCompleteHandler(event:FlexEvent):void {
+				radiate.addEventListener(RadiateEvent.TARGET_CHANGE, targetChangeHandler);
+				
+				if (radiate.target) {
+					target = radiate.target as DisplayObject;
+				}
+				
+				
+			}
+			
+			
+			protected function targetChangeHandler(event:RadiateEvent):void {
+				target = event.selectedItem as DisplayObject;
+			}
+			
+			protected function group1_pasteHandler(event:Event):void {
+				/*var clipboard:Clipboard = Clipboard.generalClipboard;
+				Radiate.log.info("Formats: " + clipboard.formats.join(","));
+				Radiate.log.info("PASTED: " + clipboard.getData(ClipboardFormats.TEXT_FORMAT));*/
+				/*var value:* = clipboard.getData(ClipboardFormats.BITMAP_FORMAT, ClipboardTransferMode.CLONE_ONLY);
+				var value1:* = clipboard.getData(ClipboardFormats.BITMAP_FORMAT, ClipboardTransferMode.CLONE_PREFERRED);
+				var value2:* = clipboard.getData(ClipboardFormats.BITMAP_FORMAT, ClipboardTransferMode.ORIGINAL_ONLY);
+				var value3:* = clipboard.getData(ClipboardFormats.BITMAP_FORMAT, ClipboardTransferMode.ORIGINAL_PREFERRED);*/
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<fx:String id="fileName">screenshot</fx:String>
+		
+		<!-- TAKE SNAPSHOT -->
+		<handlers:EventHandler eventName="click" 
+							   target="{snapshotLabel}">
+			
+			<display:Rasterize id="rasterize" target="{target}" source="{target}" 
+							   horizontalPadding="0" fillColor="#ff0000" absoluteBounds="true">
+				<display:invalidTargetEffect>
+					<status:ShowStatusMessage message="Select a target"/>
+				</display:invalidTargetEffect>
+				<display:successEffect>
+					<status:ShowStatusMessage message="Snapshot captured"/>
+				</display:successEffect>
+				<display:errorEffect>
+					<status:ShowStatusMessage message="An error occurred. {rasterize.errorEvent}"/>
+				</display:errorEffect>
+			</display:Rasterize>
+			
+			
+		</handlers:EventHandler>
+		
+		
+		<!-- EXPORT SNAPSHOT -->
+		<handlers:EventHandler eventName="click" 
+							   target="{exportLabel}">
+			
+			<bitmap:EncodeToPNG 		data="{rasterize.bitmapData}" />
+			
+			<core:CopyPreviousToNext 	sourcePropertyName="byteArray" />
+			
+			<file:PromptSaveAs 			fileName="{fileName}" 
+										fileExtension="png"
+										targetAncestor="{this}"/>
+			
+		</handlers:EventHandler>
+		
+		<!-- PREVIEW -->
+		<handlers:EventHandler eventName="click" 
+							   target="{preview}">
+			<popup:OpenPopUp id="openPopUp" 
+							 modalDuration="250"
+							 showDropShadow="true"
+							 popUpType="{ImagePreview}"
+							 closeOnMouseDownInside="true"
+							 data="{rasterize.bitmapData}"/>
+		</handlers:EventHandler>
+		
+		
+		<fx:Component className="ImagePreview">
+			<s:ItemRenderer autoDrawBackground="false">
+				<s:Rect width="100%" height="100%">
+					<s:fill>
+						<s:SolidColor color="#ffffff"/>
+					</s:fill>
+				</s:Rect>
+				<s:Image source="{data}" top="5" right="5" left="5" bottom="5" />
+			</s:ItemRenderer>
+		</fx:Component>
+	</fx:Declarations>
+	
+	<s:HGroup width="100%" typographicCase="uppercase" left="4" right="4">
+		<s:Label id="snapshotLabel" 
+				 text="Capture Image" 
+				 fontSize="10" 
+				 buttonMode="true"
+				 textAlign="center"
+				 fontWeight="bold"
+				 minWidth="{snapshotLabel.height}"
+				 backgroundColor="#484848" 
+				 color="#eeeeee" 
+				 paddingBottom="4" paddingLeft="4"
+				 paddingRight="4" paddingTop="4"/>
+		
+		<s:Label id="exportLabel" 
+				 text="Export"
+				 buttonMode="true"
+				 fontSize="10" 
+				 fontWeight="bold"
+				 textAlign="center"
+				 backgroundColor="#484848" 
+				 color="#eeeeee" 
+				 paddingBottom="4" paddingLeft="4"
+				 paddingRight="4" paddingTop="4"
+				 includeInLayout="{Boolean(rasterize.bitmapData)}"
+				 visible="{Boolean(rasterize.bitmapData)}"
+				 minWidth="{exportLabel.height}"
+				 />
+		
+		<s:Spacer width="100%" />
+		
+		<!--<s:TextInput paste="group1_pasteHandler(event)"/>-->
+		<controls:ImageButton id="preview" 
+							  source="assets/images/components/Image.png"
+							  includeInLayout="{Boolean(rasterize.bitmapData)}"
+							  visible="{Boolean(rasterize.bitmapData)}"
+							  />
+<!--							  mouseUpEffect="{openPopUp}"-->
+		
+	</s:HGroup>
+	
+</s:Group>

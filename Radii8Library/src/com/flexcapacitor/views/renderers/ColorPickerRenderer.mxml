@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<r:PropertiesGridRendererBase xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/mx" 
+		xmlns:c="com.flexcapacitor.components.*"
+		xmlns:r="com.flexcapacitor.views.renderers.*"
+
+		clipAndEnableScrolling="true">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.flexcapacitor.skins.ClearButton;
+			
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<fx:Boolean id="includeCopyIcon"/>
+		<fx:Boolean id="includeTextInput"/>
+	</fx:Declarations>
+	
+	<r:layout>
+		<s:HorizontalLayout />
+	</r:layout>
+	
+	<c:ColorChooser id="colorChooser" left="0" top="0" right="0" bottom="0"
+					returnType="hexidecimalHash" 
+					change="setTargetValue()"
+					includeTextInput="{includeTextInput}"
+					includeCopyIcon="{includeCopyIcon}"/>
+	<s:Button id="clearStyleButton" 
+			  skinClass="com.flexcapacitor.skins.ClearButton"
+			  click="setTargetValue(true)"
+			  right="0" 
+			  verticalCenter="0"/>
+	
+</r:PropertiesGridRendererBase>

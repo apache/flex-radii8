@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<!--
+
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-->
+<project name="Update Verson" default="main" basedir=".">
+
+  <!--<target name="build" >
+    <mkdir dir="build"/>
+    <javac srcdir="src" destdir="build"/>
+  </target>
+
+  <target name="declare" depends="build">
+    <taskdef name="mytask"
+        classname="com.mydomain.MyVeryOwnTask"
+        classpath="build"/>
+  </target>
+
+  <target name="main" depends="declare">
+    <mytask message="Hello World! MyVeryOwnTask works!"/>
+  </target>-->
+  
+	<!--- Updating build Date and Version -->
+	<target name="main">
+	
+		<propertyset id="tdate"></propertyset>
+		<propertyset id="ttime"></propertyset>
+
+		<tstamp>
+			<format property="tdate" pattern="yyyy-MM-dd"/>
+		</tstamp>
+	
+		<tstamp>
+			<format property="ttime" pattern="hh:mm aa"/>
+		</tstamp>
+		
+		<buildnumber file="build.number"/>
+		
+		<echo>Updating version to current date: ${tdate} and time: ${ttime}</echo>
+		
+		<replaceregexp byline="true">
+			<regexp pattern='public static const BUILD_DATE:String = "([0-9-]+)"'/>
+			<substitution expression='public static const BUILD_DATE:String = "${tdate}"'/>
+			<fileset dir="src">
+				<include name="build.as"/>
+			</fileset>
+		</replaceregexp>
+		
+		<replaceregexp byline="true">
+			<regexp pattern='public static const BUILD_TIME:String = "([0-9:PMA ]+)"'/>
+			<substitution expression='public static const BUILD_TIME:String = "${ttime}"'/>
+			<fileset dir="src">
+				<include name="build.as"/>
+			</fileset>
+		</replaceregexp>
+		
+		<replaceregexp byline="true">
+			<regexp pattern='public static const BUILD_NUMBER:String = "([0-9\.]+)"'/>
+			<substitution expression='public static const BUILD_NUMBER:String = "${build.number}"'/>
+			<fileset dir="src">
+				<include name="build.as"/>
+			</fileset>
+		</replaceregexp>
+	</target>
+</project>
